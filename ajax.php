@@ -18,14 +18,14 @@ if(isset($_GET['t'])){
             }
             break;
         case "s":
-//            if(isset($_GET['id']) && strtolower($_GET['id']) === 'us'){
-//                $result = $usStates;
-//            }else{
-//                $result = ["NA" => "Unknown"];
-//            }
+            if(isset($_GET['id']) && strtolower($_GET['id']) === 'us'){
+                //$result = $usStates;
+                $result = getFromUrl('https://gist.githubusercontent.com/mshafrir/2646763/raw/8b0dbb93521f5d6889502305335104218454c2bf/states_hash.json');
+                $result = json_decode($result);
+            }else{
+                $result = ["NA" => "Unknown"];
+            }
 
-            $result = getFromUrl('https://gist.githubusercontent.com/mshafrir/2646763/raw/8b0dbb93521f5d6889502305335104218454c2bf/states_hash.json');
-            $result = json_decode($result);
             break;
         default: break;
 

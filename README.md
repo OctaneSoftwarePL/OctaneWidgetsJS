@@ -453,10 +453,10 @@ Select2`, so on ready it has to be initialized on every related field:
   Since there is no general loader in css, loader for each field is defined “in fly” (yes, that needs improvement but there was no time to do so), so the general color of loader has to be set:
 
 ```JS
-  GLOBAL_JS.LOADER_COLOR = '#139c9b'; // general color for each loader
-  GLOBAL_JS.INP_TOP      = '30%';     // general space if not overriden
-  GLOBAL_JS.INP_BTM      = '-18px';   // general space if not overriden
-  GLOBAL_JS.IS_EDIT      = view === 'edit' && method === 'PUT'; // needed to disable fields
+    GLOBAL_JS.LOADER_COLOR = '#139c9b'; // general loader color
+    GLOBAL_JS.INP_TOP      = '15px';    // general top spacing
+    GLOBAL_JS.INP_LFT      = '30%';     // general left spacing
+    GLOBAL_JS.AJAX_FAILED  = false;     // if exception thrown, this is true
 ```
 SelectAutoCompleteWidget: AutoComplete select on some_select_id field example:
 

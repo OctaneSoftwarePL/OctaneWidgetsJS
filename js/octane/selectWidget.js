@@ -201,10 +201,11 @@ SelectWidget.prototype.loadValues = function(parent_id)
             INSTANCE.runErrorResponse(exception);
         },
         dataType   :"json",
+        //async      : false,
         statusCode : {
             500: function(err) {
-                INSTANCE.runErrorResponse("500 - " + err);
-                INSTANCE.loaderOff();
+            },
+            429: function(err) {
             }
         }
     }).done(function(){
@@ -214,6 +215,8 @@ SelectWidget.prototype.loadValues = function(parent_id)
         if(INSTANCE.isDisabledWhenLoaded && INSTANCE.widgetNode.val()){
             INSTANCE.disableNode();
         }
+    }).fail(function(jqXHR, textStatus, errorThrown){
+        INSTANCE.onFail(jqXHR, textStatus, errorThrown);
     });
 
     return INSTANCE;
@@ -247,10 +250,19 @@ SelectWidget.prototype.preloadItem = function(value)
             error   : function(xhr, type, exception) {
                 INSTANCE.runErrorResponse(exception);
             },
-            dataType:"json",
+            dataType   :"json",
+            //async      : false,
+            statusCode : {
+                500: function(err) {
+                },
+                429: function(err) {
+                }
+            }
         }).done(function(){
             INSTANCE.enableNode();
             INSTANCE.loaderOff();
+        }).fail(function(jqXHR, textStatus, errorThrown){
+            INSTANCE.onFail(jqXHR, textStatus, errorThrown);
         });
     }else{
         INSTANCE.widgetNode.val(value).trigger('change');
@@ -326,8 +338,18 @@ SelectWidget.prototype.loadEntityData = function(id, onSuccessCallback)
         error   : function(xhr, type, exception) {
             onSuccessCallback({});
         },
-        dataType :"json",
-        async    : true
+        dataType   :"json",
+        //async      : false,
+        statusCode : {
+            500: function(err) {
+            },
+            429: function(err) {
+            }
+        }
+    }).done(function(data, textStatus, jqXHR){
+        GLOBAL_JS.rateTypeWidget.loaderOff();
+    }).fail(function(jqXHR, textStatus, errorThrown){
+        INSTANCE.onFail(jqXHR, textStatus, errorThrown);
     });
 };
 
@@ -447,5 +469,26 @@ SelectWidget.prototype.runSuccessfulResponse = function(response)
 SelectWidget.prototype.runErrorResponse = function(exception)
 {
     let INSTANCE = this;
-    console.log('TODO runErrorResponse on SelectWidget:', exception);
-}
+    //console.log('runErrorResponse on SelectWidget:', exception);
+};
+
+// run this on ajax error,
+SelectWidget.prototype.onFail = function(jqXHR, textStatus, errorThrown)
+{
+    let INSTANCE = this;
+
+    if(!GLOBAL_JS.AJAX_FAILED){
+        window.stop();
+        console.error("Catched " + textStatus + ": " + errorThrown);
+        GLOBAL_JS.AJAX_FAILED = true;
+
+        let message = "Error!";
+        if(typeof TRANS[jqXHR.status] !== 'undefined' && TRANS[jqXHR.status].length > 0){
+            message = TRANS[jqXHR.status];
+        }
+        alert(message); //or confirm and reload page
+    }
+
+    INSTANCE.widgetNode.val(null);
+    INSTANCE.loaderOff();
+};

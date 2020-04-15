@@ -29,7 +29,7 @@ function SelectAutoCompleteWidget(selector)
 
     // can be overridden after
     this.setLoaderName(this.loaderName)
-        .setStyles(GLOBAL_JS.LOADER_COLOR, GLOBAL_JS.INP_TOP, GLOBAL_JS.INP_LFT);
+        .setStyles(GLOBAL_JS.LOADER_COLOR, GLOBAL_JS.INP_LFT, GLOBAL_JS.INP_TOP);
 
     this.currentEntity    = {};
     this.callbackFunction = function(){return false;};
@@ -247,10 +247,11 @@ SelectAutoCompleteWidget.prototype.preloadItem = function(value)
             INSTANCE.runErrorResponse(exception);
         },
         dataType   :"json",
+        //async      : false,
         statusCode : {
             500: function(err) {
-                INSTANCE.runErrorResponse("500 - " + err);
-                INSTANCE.loaderOff();
+            },
+            429: function(err) {
             }
         }
     }).done(function(){
@@ -260,6 +261,8 @@ SelectAutoCompleteWidget.prototype.preloadItem = function(value)
         if(INSTANCE.isDisabledWhenLoaded && INSTANCE.widgetNode.val()){
             INSTANCE.disableNode();
         }
+    }).fail(function(jqXHR, textStatus, errorThrown){
+        INSTANCE.onFail(jqXHR, textStatus, errorThrown);
     });
 
     return INSTANCE;
@@ -336,9 +339,18 @@ SelectAutoCompleteWidget.prototype.loadEntityData = function(id, onSuccessCallba
             onSuccessCallback({});
             console.info("Error while loading entity for " + INSTANCE.fieldName + '. ' + exception + ' for id: ' + id + '.');
         },
-        dataType :"json",
-        async    : true
-    }).done(function(){
+        dataType   :"json",
+        //async      : false,
+        statusCode : {
+            500: function(err) {
+            },
+            429: function(err) {
+            }
+        }
+    }).done(function(data, textStatus, jqXHR){
+        INSTANCE.loaderOff();
+    }).fail(function(jqXHR, textStatus, errorThrown){
+        INSTANCE.onFail(jqXHR, textStatus, errorThrown);
     });
 };
 
@@ -443,13 +455,34 @@ SelectAutoCompleteWidget.prototype.runSuccessfulResponse = function(response)
     INSTANCE.populateValuesFromResponse(response);
 };
 
-// run this on ajax error, TODO:
+// run this on ajax error,
 SelectAutoCompleteWidget.prototype.runErrorResponse = function(exception, type)
 {
     let INSTANCE = this;
     if(typeof type !== 'undefined' && type !== "abort"){
-        console.log('TODO runErrorResponse on SelectAutoCompleteWidget:', exception);
+        //console.log('runErrorResponse on SelectAutoCompleteWidget:', exception);
     }else{
         //console.info("Autocomplete request aborted.");
     }
+};
+
+// run this on ajax error,
+SelectAutoCompleteWidget.prototype.onFail = function(jqXHR, textStatus, errorThrown)
+{
+    let INSTANCE = this;
+
+    if(!GLOBAL_JS.AJAX_FAILED){
+        window.stop();
+        console.error("Catched " + textStatus + ": " + errorThrown);
+        GLOBAL_JS.AJAX_FAILED = true;
+
+        let message = "Error!";
+        if(typeof TRANS[jqXHR.status] !== 'undefined' && TRANS[jqXHR.status].length > 0){
+            message = TRANS[jqXHR.status];
+        }
+        alert(message); //or confirm and reload page
+    }
+
+    INSTANCE.widgetNode.val(null);
+    INSTANCE.loaderOff();
 };

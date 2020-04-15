@@ -17,10 +17,11 @@ function InputWidget(selector)
     this.loaderIsOff                = true;
     this.isHidden                   = false;
     this.isDisabledWhenLoaded       = false;
+    this.userFriendlyUrls           = false;
 
     // can be overridden after
     this.setLoaderName(this.loaderName)
-        .setStyles(GLOBAL_JS.LOADER_COLOR, GLOBAL_JS.INP_TOP, GLOBAL_JS.INP_LFT);
+        .setStyles(GLOBAL_JS.LOADER_COLOR, GLOBAL_JS.INP_LFT, GLOBAL_JS.INP_TOP);
 
     this.currentEntity    = {};
     this.callbackFunction = function(){return false;};
@@ -162,33 +163,40 @@ InputWidget.prototype.loadValues = function(id)
     }
 
     if(typeof id !== 'undefined'){
-        url = url + '/' + id + '/';
+        if(INSTANCE.userFriendlyUrls){
+            url = url + '/' + id + '/';
+        }else{
+            url = url + '&id=' + id + '';
+        }
     }
 
     $.ajax({
-        method  : "GET",
-        url     : url,
-        success : function(response) {
+        method     : "GET",
+        url        : url,
+        success    : function(response) {
             INSTANCE.runSuccessfulResponse(response);
         },
         error      : function(xhr, type, exception) {
-            // alert( exception );
             INSTANCE.runErrorResponse(exception);
         },
         dataType   :"json",
+        //async      : false,
         statusCode : {
             500: function(err) {
-                INSTANCE.runErrorResponse("500 - " + err);
-                INSTANCE.loaderOff();
+            },
+            429: function(err) {
             }
         }
-    }).done(function(){
+    }).done(function(data, textStatus, jqXHR){
         INSTANCE.enableNode();
         INSTANCE.loaderOff();
 
         if(INSTANCE.isDisabledWhenLoaded && INSTANCE.widgetNode.val()){
             INSTANCE.disableNode();
         }
+        INSTANCE.checkRequests();
+    }).fail(function(jqXHR, textStatus, errorThrown){
+        INSTANCE.onFail(jqXHR, textStatus, errorThrown);
     });
 
     return INSTANCE;
@@ -310,4 +318,32 @@ InputWidget.prototype.runErrorResponse = function(exception)
 {
     let INSTANCE = this;
     INSTANCE.widgetNode.val(null);
-}
+};
+
+// run this on ajax error,
+InputWidget.prototype.onFail = function(jqXHR, textStatus, errorThrown)
+{
+    let INSTANCE = this;
+
+    if(!GLOBAL_JS.AJAX_FAILED){
+        window.stop();
+        console.error("Catched " + textStatus + ": " + errorThrown);
+        GLOBAL_JS.AJAX_FAILED = true;
+
+        let message = "Error!";
+        if(typeof TRANS[jqXHR.status] !== 'undefined' && TRANS[jqXHR.status].length > 0){
+            message = TRANS[jqXHR.status];
+        }
+        alert(message); //or confirm and reload page
+    }
+
+    INSTANCE.widgetNode.val(null);
+    INSTANCE.loaderOff();
+};
+
+// check requests
+InputWidget.prototype.checkRequests = function()
+{
+    let INSTANCE = this;
+    //checkResources();
+};

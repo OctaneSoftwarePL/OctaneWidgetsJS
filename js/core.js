@@ -4,6 +4,10 @@ const URLS = {
     'getStates'     : window.location.href + "/ajax.php?t=s",
 };
 
+const TRANS = {
+    429 : "Too many requests",
+};
+
 const GLOBAL_JS = {};
 
 $(document).ready( function () {
@@ -28,6 +32,7 @@ $(document).ready( function () {
     GLOBAL_JS.LOADER_COLOR = '#139c9b';
     GLOBAL_JS.INP_TOP      = '15px';
     GLOBAL_JS.INP_LFT      = '30%';
+    GLOBAL_JS.AJAX_FAILED  = false;
 
     // 1. country will load states
     GLOBAL_JS.countryWidget = new SelectAutoCompleteWidget('select[name="country"]');
